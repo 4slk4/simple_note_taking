@@ -6,7 +6,7 @@
 
 In the main folder, open terminal and type ```npm install``` to install dependencies
 
-Then type ```npm run dev```
+Then type ```node server.js``` to run the app, or ```npm run dev``` to enter dev mode
 
 Open the browser and navigate to ```http://localhost:3000/```
 
