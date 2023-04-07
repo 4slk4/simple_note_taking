@@ -10,7 +10,9 @@ import initializePassport from './passport-config.js';
 import methodOverride from 'method-override';
 
 
+/* DEFINITIONS */
 let users = [];
+
 // Create the user data from the text file and populate the users array
 const loadUsers = () => {
     try {
@@ -28,7 +30,6 @@ const loadUsers = () => {
     }
 };
 
-
 // Prevent non-user to access to the homepage
 const checkAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
@@ -36,7 +37,8 @@ const checkAuthenticated = (req, res, next) => {
     }
     
     res.redirect('/login');
-}
+};
+
 // Prevent user to go back to login page
 const checkNotAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
@@ -45,6 +47,9 @@ const checkNotAuthenticated = (req, res, next) => {
     next();
 }
 
+
+
+/* INITIALIZING AND LOADING MIDDLEWARES */
 loadUsers();
 config();
 const app = express();
@@ -65,10 +70,38 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(methodOverride('_method'));
 
+
+
+
+/* MAIN APPLICATION */
 app.get('/', checkAuthenticated, (req, res) => {
-    res.render('index.ejs', { name: req.user.name });
+    res.render('index.ejs', { name: req.user.name, notes: req.user.notes });
 });
 
+// Add new note
+app.post('/new-note', checkAuthenticated, (req, res) => {
+    const user =  req.user;
+    const id = Date.now().toString(); 
+    const { title, content } = req.body;
+    const newNote = { id, title, content };
+    user.notes.push(newNote);
+    fs.writeFileSync('users.txt', JSON.stringify(users));
+    res.redirect('/');
+})
+
+// Delete an old note
+app.delete('/delete-note/:noteId', checkAuthenticated, (req, res) => {
+    const user = req.user;
+    const noteId = req.params.noteId;
+    user.notes = user.notes.filter((note) => note.id !== noteId);
+    fs.writeFileSync('users.txt', JSON.stringify(users));
+    res.redirect('/');
+})
+
+
+
+
+/* LOG IN TO ACCOUNT */
 app.get('/login', checkNotAuthenticated, (req, res) => {
     res.render('login.ejs');
 });
@@ -79,6 +112,10 @@ app.post('/login', passport.authenticate('local', {
    failureFlash: true 
 }));
 
+
+
+
+/* REGISTER NEW ACCOUNT */
 app.get('/register', checkNotAuthenticated, (req, res) => {
     res.render('register.ejs', { message: null });
 });
@@ -107,16 +144,19 @@ app.post('/register', async (req, res) => {
         users.push({
             id: Date.now().toString(),
             name: req.body.username,
-            password: hashedPassword
+            password: hashedPassword,
+            notes: []
         });
         fs.writeFileSync('users.txt', JSON.stringify(users));
         res.redirect('/login');
     } catch {
         res.redirect('/register');
     }
-    console.log(users);
 });
 
+
+
+/* LOG OUT */
 app.delete('/logout', (req, res) => {
     req.logOut((err) => {
         if (err) { return next(err); }
@@ -124,4 +164,8 @@ app.delete('/logout', (req, res) => {
     });
 })
 
+
+
+
 app.listen(3000);
+
