@@ -4,7 +4,9 @@
 
 ### Required NPM installed
 
-In the main folder, open terminal and type ```npm run dev```
+In the main folder, open terminal and type ```npm install``` to install dependencies
+
+Then type ```npm run dev```
 
 Open the browser and navigate to ```http://localhost:3000/```
 
